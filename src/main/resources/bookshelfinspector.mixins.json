@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "com.lukasabbe.mixin",
+  "compatibilityLevel": "${java}",
+  "mixins": [
+    "BookshelfInvoker"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "BookshelfMixin"
+  ]
+}

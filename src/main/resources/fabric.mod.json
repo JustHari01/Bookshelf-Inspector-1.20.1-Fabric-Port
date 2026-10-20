@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "Unofficial Fabric 1.20.1 port of Bookshelf Inspector. AI-assisted adaptation.",
+  "authors": [
+    "Lukasabbe",
+    "JustHari01"
+  ],
+  "contact": {
+    "homepage": "https://modrinth.com/mod/bookshelf-inspector",
+    "sources": "https://github.com/lukasabbe/bookshelf-inspector"
+  },
+  "license": "MIT",
+  "icon": "assets/bookshelfinspector/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.lukasabbe.entry.BookshelfInspectorFabric"
+    ],
+    "client": [
+      "com.lukasabbe.entry.BookshelfInspectorFabric"
+    ],
+    "modmenu":  [
+      "com.lukasabbe.config.ModMenu"
+    ]
+  },
+  "mixins": [
+    "${mixinsConfig}"
+  ],
+  "depends": {
+    "fabricloader": ">=0.17",
+    "fabric-api": ">=${fabricApi}",
+    "minecraft": "${minecraft}"
+  }
+}

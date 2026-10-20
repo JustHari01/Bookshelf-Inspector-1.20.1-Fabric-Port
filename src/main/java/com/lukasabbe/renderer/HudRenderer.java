@@ -1,0 +1,219 @@
+package com.lukasabbe.renderer;
+
+import com.lukasabbe.BookshelfInspectorClient;
+import com.lukasabbe.data.BookData;
+import com.lukasabbe.data.Tags;
+import com.lukasabbe.util.ItemTools;
+import com.lukasabbe.util.RomanNumerals;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.network.chat.*;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffectUtil;
+import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix3x2fStack;
+//? if >= 1.20.5 {
+/*import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.tags.EnchantmentTags;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+*///?} else {
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.enchantment.Enchantment;
+import java.util.Map;
+//?}
+
+//? if >= 26.1 {
+/*import net.minecraft.client.gui.GuiGraphicsExtractor;
+*///?} elif <= 1.21.11 {
+import net.minecraft.client.gui.GuiGraphics;
+//?}
+
+public class HudRenderer {
+    //? if >= 26.1 {
+    /*public static void hudRender(GuiGraphicsExtractor context, Minecraft client) {
+    *///?} elif <= 1.21.11 {
+    public static void hudRender(GuiGraphics context, Minecraft client) {
+    //?}
+        if (!BookshelfInspectorClient.modAvailable) return;
+        //? if >= 26.1 {
+        /*if (client.gui.hud.isHidden()) return;
+        *///?} elif <= 1.21.11 {
+        if (client.options.hideGui) return;
+        //?}
+        if (!BookshelfInspectorClient.bookShelfData.isCurrentBookDataToggled) return;
+
+        final BookData currentBookData = BookshelfInspectorClient.currentBookData;
+        final int screenWidth = client.getWindow().getGuiScaledWidth();
+        final int screenHeight = client.getWindow().getGuiScaledHeight();
+        final int x = screenWidth / 2;
+        final int y = screenHeight / 2;
+        final ItemStack itemStack = currentBookData.itemStack;
+
+        if (BookshelfInspectorClient.bookShelfData.latestBlockState.is(Tags.SHELVES)
+                && ItemTools.isNormalStack(itemStack)
+                && !BookshelfInspectorClient.CONFIG.shelfDisplayNormal) return;
+
+        int color = 0xFFFFFFFF;
+        //? if >= 1.20.5 {
+        /*final TextColor colorValue = TextColor.fromLegacyFormat(itemStack.getRarity().color());
+        *///?} else {
+        final TextColor colorValue = TextColor.fromLegacyFormat(itemStack.getRarity().color);
+        //?}
+        if (colorValue != null) color = colorValue.getValue() + 0xFF000000;
+
+        float scaleFactor = (float) BookshelfInspectorClient.CONFIG.scale / 10;
+        final MutableComponent itemName = itemStack.getHoverName().copy();
+        drawScaledText(context, itemName, x, y + (int) (10 * scaleFactor), color, client.font);
+
+        if (itemStack.isStackable() && itemStack.getCount() > 1) {
+            float rightEdge = x + (client.font.width(itemName) / 2f) * scaleFactor;
+            float spacing = 9 * scaleFactor;
+            int nextX = (int) (rightEdge + spacing);
+            final MutableComponent count = Component.empty();
+            count.append(" (" + itemStack.getCount() + ")");
+            ComponentUtils.mergeStyles(count, Style.EMPTY.withColor(ChatFormatting.GRAY));
+            drawScaledText(context, count, nextX, y + (int) (10 * scaleFactor), color, client.font);
+        }
+
+        // Enchantments
+        //? if >= 1.20.5 {
+        /*ItemEnchantments itemEnchantments = ItemTools.getItemEnchantments(itemStack);
+        if (itemEnchantments != null) {
+            int i = (int) (20 * scaleFactor);
+            for (Holder<Enchantment> enchantment : itemEnchantments.keySet()) {
+                int level = itemEnchantments.getLevel(enchantment);
+                String levelText = level == 1 ? "" : (BookshelfInspectorClient.CONFIG.useRoman && level > 0
+                        ? RomanNumerals.toRoman(level) : String.valueOf(level));
+                MutableComponent enchantmentText = enchantment.value().description().copy();
+                if (!levelText.isEmpty()) enchantmentText.append(" " + levelText);
+                if (enchantment.is(EnchantmentTags.CURSE)) {
+                    ComponentUtils.mergeStyles(enchantmentText, Style.EMPTY.withColor(ChatFormatting.RED));
+                } else {
+                    ComponentUtils.mergeStyles(enchantmentText, Style.EMPTY.withColor(ChatFormatting.GRAY));
+                }
+                drawScaledText(context, enchantmentText, x, y + i, 0xFFFFFFFF, client.font);
+                i += (int) (10 * scaleFactor);
+            }
+        }
+        *///?} else {
+        Map<Enchantment, Integer> itemEnchantments = ItemTools.getItemEnchantments(itemStack);
+        if (itemEnchantments != null && !itemEnchantments.isEmpty()) {
+            int i = (int) (20 * scaleFactor);
+            for (Map.Entry<Enchantment, Integer> entry : itemEnchantments.entrySet()) {
+                Enchantment enchantment = entry.getKey();
+                int level = entry.getValue();
+                String levelText = level == 1 ? "" : (BookshelfInspectorClient.CONFIG.useRoman && level > 0
+                        ? RomanNumerals.toRoman(level) : String.valueOf(level));
+                MutableComponent enchantmentText = Component.translatable(enchantment.getDescriptionId());
+                if (!levelText.isEmpty()) enchantmentText.append(" " + levelText);
+                if (enchantment.isCurse()) {
+                    ComponentUtils.mergeStyles(enchantmentText, Style.EMPTY.withColor(ChatFormatting.RED));
+                } else {
+                    ComponentUtils.mergeStyles(enchantmentText, Style.EMPTY.withColor(ChatFormatting.GRAY));
+                }
+                drawScaledText(context, enchantmentText, x, y + i, 0xFFFFFFFF, client.font);
+                i += (int) (10 * scaleFactor);
+            }
+        }
+        //?}
+
+        // Potion effects
+        //? if >= 1.20.5 {
+        /*PotionContents potionContents = ItemTools.getPotionContents(itemStack);
+        if (potionContents != null) {
+            int i = (int) (20 * scaleFactor);
+            for (MobEffectInstance effect : potionContents.getAllEffects()) {
+                int amplifier = effect.getAmplifier();
+                MutableComponent potionText = effect.getEffect().value().getDisplayName().copy();
+                if (amplifier > 0) {
+                    String amplifierNumeral = BookshelfInspectorClient.CONFIG.useRoman
+                            ? RomanNumerals.toRoman(amplifier) : String.valueOf(amplifier);
+                    potionText.append(" " + amplifierNumeral);
+                }
+                potionText.append(" (" + MobEffectUtil.formatDuration(effect, 1, client.level.tickRateManager().tickrate()).getString() + ")");
+                if (!effect.getEffect().value().isBeneficial()) {
+                    ComponentUtils.mergeStyles(potionText, Style.EMPTY.withColor(ChatFormatting.RED));
+                } else {
+                    ComponentUtils.mergeStyles(potionText, Style.EMPTY.withColor(ChatFormatting.GRAY));
+                }
+                drawScaledText(context, potionText, x, y + i, 0xFFFFFFFF, client.font);
+                i += (int) (10 * scaleFactor);
+            }
+        }
+        *///?} else {
+        java.util.List<MobEffectInstance> potionEffects = ItemTools.getPotionContents(itemStack);
+        if (potionEffects != null && !potionEffects.isEmpty()) {
+            int i = (int) (20 * scaleFactor);
+            for (MobEffectInstance effect : potionEffects) {
+                int amplifier = effect.getAmplifier();
+                MutableComponent potionText = effect.getEffect().getDisplayName().copy();
+                if (amplifier > 0) {
+                    String amplifierNumeral = BookshelfInspectorClient.CONFIG.useRoman
+                            ? RomanNumerals.toRoman(amplifier) : String.valueOf(amplifier);
+                    potionText.append(" " + amplifierNumeral);
+                }
+                potionText.append(" (" + MobEffectUtil.formatDuration(effect, 1).getString() + ")");
+                if (!effect.getEffect().isBeneficial()) {
+                    ComponentUtils.mergeStyles(potionText, Style.EMPTY.withColor(ChatFormatting.RED));
+                } else {
+                    ComponentUtils.mergeStyles(potionText, Style.EMPTY.withColor(ChatFormatting.GRAY));
+                }
+                drawScaledText(context, potionText, x, y + i, 0xFFFFFFFF, client.font);
+                i += (int) (10 * scaleFactor);
+            }
+        }
+        //?}
+
+        // Written-book author
+        //? if >= 1.20.5 {
+        /*var writtenBookContent = itemStack.getComponents().get(DataComponents.WRITTEN_BOOK_CONTENT);
+        if (writtenBookContent != null) {
+            drawScaledText(context, Component.translatable("book.byAuthor", writtenBookContent.author()),
+                    x, y + (int) (20 * scaleFactor), 0xFFFFFFFF, client.font);
+        }
+        *///?} else {
+        CompoundTag tag = itemStack.getTag();
+        if (tag != null && tag.contains("author")) {
+            drawScaledText(context, Component.translatable("book.byAuthor", tag.getString("author")),
+                    x, y + (int) (20 * scaleFactor), 0xFFFFFFFF, client.font);
+        }
+        //?}
+    }
+
+    //? if >= 26.1 {
+    /*private static void drawScaledText(GuiGraphicsExtractor context, Component text, int centerX, int y, int color, Font textRenderer) {
+    *///?} elif <= 1.21.11 {
+    private static void drawScaledText(GuiGraphics context, Component text, int centerX, int y, int color, Font textRenderer) {
+    //?}
+        //? if >= 1.21.6 {
+        /*Matrix3x2fStack stack = context.pose();
+        stack.pushMatrix();
+        stack.translate(centerX, y);
+        float scale = (float) BookshelfInspectorClient.CONFIG.scale / 10;
+        stack.scale(scale, scale);
+        stack.translate(-centerX, -y);
+        *///?} else {
+        PoseStack stack = context.pose();
+        stack.pushPose();
+        stack.translate(centerX, y, 0);
+        float scale = (float) BookshelfInspectorClient.CONFIG.scale / 10;
+        stack.scale(scale, scale, scale);
+        stack.translate(-centerX, -y, 0);
+        //?}
+        //? if >= 26.1 {
+        /*context.centeredText(textRenderer, text, centerX, y, color);
+        *///?} elif <= 1.21.11 {
+        context.drawCenteredString(textRenderer, text, centerX, y, color);
+        //?}
+        //? if >= 1.21.6 {
+        /*stack.popMatrix();
+        *///?} else {
+        stack.popPose();
+        //?}
+    }
+}
